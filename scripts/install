@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+user_home=${HOME:?HOME is required}
+
+[[ $user_home == /* && $user_home != / ]] || {
+  echo "HOME must be an absolute, non-root path." >&2
+  exit 1
+}
+
+binary_source="$repo_root/bin/omax"
+skill_source="$repo_root/skills/omax"
+binary_target="$user_home/.local/bin/omax"
+skill_target="$user_home/.agents/skills/omax"
+
+[[ -x $binary_source && -f $skill_source/SKILL.md ]] || {
+  echo "This does not look like a complete omaX checkout." >&2
+  exit 1
+}
+
+install_link() {
+  local source=$1 target=$2
+  if [[ -L $target ]]; then
+    if [[ $(readlink -- "$target") == "$source" ]]; then
+      return
+    fi
+    echo "Refusing to replace an unmanaged link: $target" >&2
+    exit 1
+  fi
+  if [[ -e $target ]]; then
+    echo "Refusing to replace an unmanaged path: $target" >&2
+    exit 1
+  fi
+  ln -s -- "$source" "$target"
+}
+
+install -d -- "$user_home/.local/bin" "$user_home/.agents/skills"
+install_link "$binary_source" "$binary_target"
+install_link "$skill_source" "$skill_target"
+
+echo "omaX helper and agent skill installed. Run: omax doctor"

@@ -16,17 +16,22 @@ product.
   Linux, with macOS and Windows locations and Safari on macOS. Profiles carry
   the names their browser shows and are tried most-recently-used first.
 - **Offline demo mode** (`omax demo`): the whole interface on local fixtures,
-  with generated avatars, so it runs and is tested without a login.
+  with repository-owned fictional avatars, so it runs and is tested without a
+  login or network access.
 - **One launcher** — `omax`, `omax demo`, `omax cli`, `omax doctor` — that
   installs its runtime under `~/.local/state/omax` and never mutates the
   deployed tree.
 - **Omarchy bar launcher** (`greensnow.omax`) opening omaX in kitty.
 - **Agent skill** (`skills/omax`) for reading and, with explicit approval,
   posting to X.
-- Release gate: typecheck, unit tests, and a 49-assertion offline TUI suite
-  driven through tmux.
+- Release gate: typecheck, unit tests, and a complete offline TUI suite driven
+  through tmux.
 
 ### Fixed
+
+- Profile photos now map both user payload shapes emitted by X across timeline,
+  search, lists and profiles. Image fetching validates every redirect, host,
+  response type, size and timeout; a failed image keeps a visible text fallback.
 
 - **Browser auto-detect found no session even when logged in.** Discovery only
   scanned Google Chrome's directory, and v11 cookies never decrypted because

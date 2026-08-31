@@ -6,10 +6,10 @@
  * or a logged-in browser. Activated with `omax --demo` (or OMAX_DEMO=1).
  */
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import sharpModule from "sharp";
 import type {
   TwitterClient,
@@ -19,37 +19,46 @@ import type {
   TwitterUser,
 } from "../lib/x-client/index.js";
 
-const DEMO_ME: TwitterUser = { id: "1", username: "moiz", name: "Moiz" };
+const DEMO_ME: TwitterUser = { id: "1", username: "mirachen", name: "Mira Chen" };
 
 const AUTHORS = [
-  { username: "omarchy", name: "Omarchy", color: "#7aa2f7" },
-  { username: "dhh", name: "DHH", color: "#f7768e" },
-  { username: "ricebuilder", name: "Rice Builder", color: "#9ece6a" },
-  { username: "tuiweekly", name: "TUI Weekly", color: "#e0af68" },
-  { username: "archbtw", name: "arch btw", color: "#bb9af7" },
+  { username: "mirachen", name: "Mira Chen", column: 0, row: 0 },
+  { username: "julescarter", name: "Jules Carter", column: 1, row: 0 },
+  { username: "raesol", name: "Rae Sol", column: 2, row: 0 },
+  { username: "theoraman", name: "Theo Raman", column: 0, row: 1 },
+  { username: "northstarlab", name: "Northstar Lab", column: 1, row: 1 },
+  { username: "formhouse", name: "Form House", column: 2, row: 1 },
 ];
 
 const avatarUrls = new Map<string, string>();
+const AVATAR_CELL_SIZE = 256;
 
-/** Render distinct initial-on-circle avatars to disk so demo mode can show
- *  real profile photos through the Kitty graphics pipeline, still offline. */
+/** Crop the repository-owned fictional avatar atlas into private runtime files.
+ *  Demo mode exercises the same Kitty image pipeline as live accounts while
+ *  remaining completely offline and free of real identities. */
 async function prepareDemoAvatars(): Promise<void> {
   const dir = join(
     process.env.XDG_STATE_HOME?.trim() || join(homedir(), ".local", "state"),
     "omax",
     "demo-avatars",
   );
-  await mkdir(dir, { recursive: true });
-  const everyone = [...AUTHORS, { username: DEMO_ME.username, name: DEMO_ME.name, color: "#0db9d7" }];
+  await mkdir(dir, { recursive: true, mode: 0o700 });
+  await chmod(dir, 0o700);
+  const atlas = await readFile(fileURLToPath(new URL("./assets/avatar-atlas.png", import.meta.url)));
   await Promise.all(
-    everyone.map(async ({ username, name, color }) => {
-      const initial = (name[0] ?? "?").toUpperCase();
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">` +
-        `<circle cx="64" cy="64" r="62" fill="${color}"/>` +
-        `<text x="64" y="86" font-family="sans-serif" font-size="64" font-weight="bold" ` +
-        `text-anchor="middle" fill="#0e0e14">${initial}</text></svg>`;
+    AUTHORS.map(async ({ username, column, row }) => {
       const path = join(dir, `${username}.png`);
-      await writeFile(path, await sharpModule(Buffer.from(svg)).png().toBuffer());
+      const avatar = await sharpModule(atlas)
+        .extract({
+          left: column * AVATAR_CELL_SIZE,
+          top: row * AVATAR_CELL_SIZE,
+          width: AVATAR_CELL_SIZE,
+          height: AVATAR_CELL_SIZE,
+        })
+        .png()
+        .toBuffer();
+      await writeFile(path, avatar, { mode: 0o600 });
+      await chmod(path, 0o600);
       avatarUrls.set(username, pathToFileURL(path).href);
     }),
   );
@@ -100,7 +109,10 @@ class DemoClient {
   private posted = 0;
 
   async getCurrentUser(): Promise<CurrentUserResult> {
-    return { success: true, user: { ...DEMO_ME } };
+    return {
+      success: true,
+      user: { ...DEMO_ME, profileImageUrl: avatarUrls.get(DEMO_ME.username) },
+    };
   }
 
   async getHomeTimeline(count = 20, options: { cursor?: string } = {}): Promise<SearchResult> {
@@ -132,7 +144,7 @@ class DemoClient {
       success: true,
       lists: [
         { id: "9001", name: "terminal people", memberCount: 42, owner: { ...DEMO_ME } },
-        { id: "9002", name: "omarchy ricers", memberCount: 128, owner: { ...DEMO_ME } },
+        { id: "9002", name: "desktop makers", memberCount: 128, owner: { ...DEMO_ME } },
       ],
     };
   }
@@ -140,7 +152,7 @@ class DemoClient {
   async getListMemberships() {
     return {
       success: true,
-      lists: [{ id: "9003", name: "linux desktop", memberCount: 512, owner: { id: "2", username: "archbtw", name: "arch btw" } }],
+      lists: [{ id: "9003", name: "linux desktop", memberCount: 512, owner: { id: "2", username: "raesol", name: "Rae Sol" } }],
     };
   }
 
@@ -157,7 +169,14 @@ class DemoClient {
   }
 
   async getUserIdByUsername(username: string) {
-    return { success: true, userId: "77", username, name: username };
+    const author = AUTHORS.find((candidate) => candidate.username === username) ?? AUTHORS[0]!;
+    return {
+      success: true,
+      userId: "77",
+      username: author.username,
+      name: author.name,
+      profileImageUrl: avatarUrls.get(author.username),
+    };
   }
 
   async getUserAboutAccount(username: string) {
@@ -203,7 +222,7 @@ class DemoClient {
 }
 
 export async function createDemoClient(): Promise<{ client: TwitterClient; me: TwitterUser }> {
-  await prepareDemoAvatars().catch(() => {});
+  await prepareDemoAvatars();
   const me: TwitterUser = { ...DEMO_ME, profileImageUrl: avatarUrls.get(DEMO_ME.username) };
   return { client: new DemoClient() as unknown as TwitterClient, me };
 }

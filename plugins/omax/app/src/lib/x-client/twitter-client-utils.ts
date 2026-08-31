@@ -1,4 +1,5 @@
 import type { GraphqlTweetResult, TweetData, TweetMedia, TwitterUser } from './twitter-client-types.js';
+import { extractProfileImageUrl } from './twitter-user-mapping.js';
 
 export function normalizeQuoteDepth(value?: number): number {
   if (value === undefined || value === null) {
@@ -320,21 +321,6 @@ export function extractArticleText(result: GraphqlTweetResult | undefined): stri
   }
 
   const articleResult = article.article_results?.result ?? article;
-  if (process.env.OMAX_DEBUG_ARTICLE === '1') {
-    console.error(
-      '[omax][debug][article] payload:',
-      JSON.stringify(
-        {
-          rest_id: result?.rest_id,
-          article: articleResult,
-          note_tweet: result?.note_tweet?.note_tweet_results?.result ?? null,
-        },
-        null,
-        2,
-      ),
-    );
-  }
-
   const title = firstText(articleResult.title, article.title);
 
   // Try to render from rich content_state first (Draft.js format with blocks + entityMap)
@@ -566,7 +552,7 @@ export function mapTweetResult(
     author: {
       username,
       name: name || username,
-      profileImageUrl: userResult?.avatar?.image_url as string | undefined,
+      profileImageUrl: extractProfileImageUrl(userResult),
     },
     authorId: userId,
     viewerHasLiked: result.legacy?.favorited,
@@ -833,7 +819,7 @@ export function parseUsersFromInstructions(
         followersCount: legacy?.followers_count,
         followingCount: legacy?.friends_count,
         isBlueVerified: userResult.is_blue_verified,
-        profileImageUrl: legacy?.profile_image_url_https ?? userResult.avatar?.image_url,
+        profileImageUrl: extractProfileImageUrl(userResult),
         createdAt: legacy?.created_at ?? core?.created_at,
       });
     }

@@ -1,19 +1,17 @@
 # Third-party notices
 
 omaX is distributed under the MIT License (see `LICENSE`). It builds on the
-components below.
+components below. Versions and source commits are pinned so the notices remain
+auditable after upstream projects change.
 
 ## Origin
 
 omaX is a fork of [`xterminal`](https://github.com/MoizIbnYousaf/xterminal)
 at commit `26167879a9a4acc2a5153880354f963b5a4c1a23`, by the same author.
 
-> **Note:** the upstream repository declares no license — it carries no
-> `LICENSE` file and no `license` field in `package.json`. omaX is licensed
-> MIT by its copyright holder, who is also the author of `xterminal`. Before
-> this repository is ever made public, confirm the licensing of the vendored
-> components listed below, since their upstream provenance is not recorded in
-> the code.
+The upstream repository carries no separate license declaration. omaX is
+released under MIT by Moiz Ibn Yousaf, the copyright holder and author of both
+repositories.
 
 ## Runtime dependencies
 
@@ -24,18 +22,17 @@ at commit `26167879a9a4acc2a5153880354f963b5a4c1a23`, by the same author.
 
 ## Vendored source
 
-These live under `app/src/lib/` and are compiled JavaScript carried over from
-the upstream fork rather than installed packages. They contain no license
-headers; their upstream projects are noted where identifiable.
+These live under `app/src/lib/` and are carried with the application rather
+than installed as packages.
 
 - **`lib/x-client/`** — client for X's web GraphQL surface: timelines,
   search, threads, bookmarks, lists, engagement and posting, plus the captured
   `query-ids.json` and `features.json` the web client sends.
-- **`lib/cookies/`** — browser cookie extraction for Chromium (SQLite plus
-  AES-128-CBC value decryption, libsecret / macOS Keychain / Windows DPAPI key
-  retrieval), Firefox and Safari. Its `SWEET_COOKIE_*` environment prefix
-  suggests an upstream "sweet-cookie" project; attribution should be confirmed
-  before public release.
+- **`lib/cookies/`** — compiled output from
+  [`@steipete/sweet-cookie`](https://github.com/steipete/sweet-cookie) v0.1.0,
+  source commit `41d609fe862e1a5bce35d403e68ec56248c84693`, with omaX integration changes.
+  Copyright 2025 Peter Steinberger, MIT License. The license is preserved at
+  `plugins/omax/app/src/lib/cookies/LICENSE`.
 
 ## Protocols and formats
 
@@ -48,3 +45,7 @@ headers; their upstream projects are noted where identifiable.
 
 omaX uses no official X/Twitter API and ships no API keys, OAuth application,
 tokens, cookies, or account data.
+
+The fictional people and organizations shown in demo mode and project
+screenshots are repository-owned synthetic fixtures. They do not represent X
+accounts or endorsements.

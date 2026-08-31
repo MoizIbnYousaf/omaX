@@ -27,13 +27,7 @@ async function connectWithProfile(opts?: {
     throw new Error(`Failed to authenticate: ${userResult.error ?? "unknown error"}`);
   }
 
-  const me: TwitterUser = {
-    id: userResult.user.id,
-    username: userResult.user.username,
-    name: userResult.user.name,
-  };
-
-  return { client, me, profile };
+  return { client, me: userResult.user, profile };
 }
 
 async function launchApp(renderer: CliRenderer, client: TwitterClient, me: TwitterUser): Promise<void> {
@@ -231,26 +225,7 @@ async function showPicker(renderer: CliRenderer): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  process.on("uncaughtException", (error) => {
-    try {
-      require("fs").appendFileSync("/tmp/omax-errors.log",
-        `[${new Date().toISOString()}] uncaughtException: ${error.stack ?? error.message}\n`);
-    } catch {}
-  });
-
-  process.on("unhandledRejection", (reason) => {
-    try {
-      const msg = reason instanceof Error ? reason.stack ?? reason.message : String(reason);
-      require("fs").appendFileSync("/tmp/omax-errors.log",
-        `[${new Date().toISOString()}] unhandledRejection: ${msg}\n`);
-    } catch {}
-  });
-
   applyOmarchyTheme();
-
-  // Views legitimately re-register selection listeners on every push; keep
-  // Node's default-10 heuristic from printing warnings over the TUI.
-  process.setMaxListeners(0);
 
   const renderer = await createCliRenderer({
     exitOnCtrlC: true,
@@ -264,7 +239,10 @@ async function main(): Promise<void> {
     // causing terminals to print the base64 payload as plain text.
     useThread: false,
   });
-  (renderer as unknown as { setMaxListeners?: (n: number) => void }).setMaxListeners?.(0);
+  // OpenTUI registers selection listeners for visible renderables. A timeline
+  // naturally exceeds EventEmitter's server-oriented default of ten; a finite
+  // ceiling still lets genuine accumulation surface during the stress suite.
+  renderer.setMaxListeners(256);
 
   if (demoMode) {
     renderer.disableStdoutInterception();

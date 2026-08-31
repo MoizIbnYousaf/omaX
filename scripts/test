@@ -4,7 +4,7 @@ set -euo pipefail
 # omaX release gate.
 #   scripts/test          fast gate (fits the manager's 60s check budget):
 #                         typecheck + theme-engine unit tests + demo-mode smoke
-#   scripts/test --full   fast gate plus the full 48-assertion TUI e2e suite
+#   scripts/test --full   fast gate plus the full offline TUI e2e suite
 #                         (offline demo mode — run before every release)
 
 FULL=0
@@ -38,6 +38,9 @@ bun run typecheck
 
 echo "--- unit tests ---"
 bun test test/*.test.ts
+
+echo "--- install layout ---"
+bash "$ROOT/scripts/test-install"
 
 echo "--- demo-mode smoke (offline, no login) ---"
 SESSION="omax-gate-$$"

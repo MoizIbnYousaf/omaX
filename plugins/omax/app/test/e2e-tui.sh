@@ -40,7 +40,14 @@ assert_screen() {
 }
 
 cleanup() {
-  tmux kill-session -t "$SESSION" 2>/dev/null || true
+  if tmux has-session -t "$SESSION" 2>/dev/null; then
+    tmux send-keys -t "$SESSION" C-c 2>/dev/null || true
+    for _ in $(seq 1 10); do
+      tmux has-session -t "$SESSION" 2>/dev/null || break
+      sleep 0.1
+    done
+    tmux kill-session -t "$SESSION" 2>/dev/null || true
+  fi
   log ""
   log "============================================"
   log "Results: $PASSED passed, $FAILED failed"
@@ -277,16 +284,10 @@ else
   pass "No render-tree listener leak warnings"
 fi
 
-if [ -f /tmp/omax-errors.log ]; then
-  err_count=$(wc -l < /tmp/omax-errors.log)
-  if [ "$err_count" -gt 0 ]; then
-    log "  WARN  $err_count error(s) in /tmp/omax-errors.log"
-    tail -3 /tmp/omax-errors.log >> "$LOG"
-  else
-    pass "No errors in error log"
-  fi
+if echo "$FULL_CAPTURE" | grep -Eq "uncaughtException|unhandledRejection|^error:"; then
+  fail "No uncaught runtime errors"
 else
-  pass "No error log file (clean run)"
+  pass "No uncaught runtime errors"
 fi
 
 log ""

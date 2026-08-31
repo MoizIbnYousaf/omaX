@@ -28,6 +28,7 @@ export function renderUserInfo(user: TwitterUser, state: UserInfoState = {}) {
   const followers = formatCount(user.followersCount);
   const following = formatCount(user.followingCount);
   const verified = user.isBlueVerified ? " • verified" : "";
+  const avatarFallback = (user.name[0] ?? "@").toUpperCase();
   const showInlineAvatarOverlay = Boolean(
     state.useInlineAvatarOverlay && state.avatarAnchorId && user.profileImageUrl,
   );
@@ -50,11 +51,16 @@ export function renderUserInfo(user: TwitterUser, state: UserInfoState = {}) {
         gap: 1,
       },
       showInlineAvatarOverlay
-        ? Box({
-            id: state.avatarAnchorId,
-            width: PROFILE_AVATAR_WIDTH_CELLS,
-            height: PROFILE_AVATAR_HEIGHT_ROWS,
-          })
+        ? Box(
+            {
+              id: state.avatarAnchorId,
+              width: PROFILE_AVATAR_WIDTH_CELLS,
+              height: PROFILE_AVATAR_HEIGHT_ROWS,
+              alignItems: "center",
+              justifyContent: "center",
+            },
+            Text({ content: avatarFallback, fg: theme.textMuted }),
+          )
         : Box(
             {
               width: PROFILE_AVATAR_WIDTH_CELLS,

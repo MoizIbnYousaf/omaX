@@ -48,6 +48,7 @@ export function renderPostCard(item: ExpandedTweet, state: PostCardState = {}) {
   const name = author?.name ? sanitizeText(author.name) : "Unknown";
   const handle = author?.username ? sanitizeText(author.username) : "unknown";
   const header = `${name} (@${handle})`;
+  const avatarFallback = (name[0] ?? "@").toUpperCase();
   const stamp = formatTimestamp(tweet.createdAt);
   const avatarUrl = author?.profileImageUrl;
   const mediaSummary = item.media?.length ? "[media attached]" : "";
@@ -80,11 +81,16 @@ export function renderPostCard(item: ExpandedTweet, state: PostCardState = {}) {
         gap: 1,
       },
       showInlineAvatarOverlay
-        ? Box({
-            id: state.avatarAnchorId,
-            width: AVATAR_WIDTH_CELLS,
-            height: AVATAR_HEIGHT_ROWS,
-          })
+        ? Box(
+            {
+              id: state.avatarAnchorId,
+              width: AVATAR_WIDTH_CELLS,
+              height: AVATAR_HEIGHT_ROWS,
+              alignItems: "center",
+              justifyContent: "center",
+            },
+            Text({ content: avatarFallback, fg: theme.textMuted }),
+          )
         : Box(
             {
               width: AVATAR_WIDTH_CELLS,

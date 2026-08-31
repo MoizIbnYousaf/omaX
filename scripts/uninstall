@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+user_home=${HOME:?HOME is required}
+
+[[ $user_home == /* && $user_home != / ]] || {
+  echo "HOME must be an absolute, non-root path." >&2
+  exit 1
+}
+
+remove_owned_link() {
+  local target=$1 expected=$2
+  if [[ -L $target && $(readlink -- "$target") == "$expected" ]]; then
+    unlink -- "$target"
+  elif [[ -e $target || -L $target ]]; then
+    echo "Preserving unmanaged path: $target" >&2
+  fi
+}
+
+remove_owned_link "$user_home/.local/bin/omax" "$repo_root/bin/omax"
+remove_owned_link "$user_home/.agents/skills/omax" "$repo_root/skills/omax"
+
+echo "omaX helper and agent skill removed. Browser sessions and runtime state were preserved."

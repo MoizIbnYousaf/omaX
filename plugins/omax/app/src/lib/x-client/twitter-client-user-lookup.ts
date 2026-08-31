@@ -2,6 +2,7 @@ import { normalizeHandle } from './normalize-handle.js';
 import type { AbstractConstructor, Mixin, TwitterClientBase } from './twitter-client-base.js';
 import { TWITTER_API_BASE } from './twitter-client-constants.js';
 import type { AboutAccountResult } from './twitter-client-types.js';
+import { extractProfileImageUrl } from './twitter-user-mapping.js';
 
 /** Result of username to userId lookup */
 export interface UserLookupResult {
@@ -9,6 +10,7 @@ export interface UserLookupResult {
   userId?: string;
   username?: string;
   name?: string;
+  profileImageUrl?: string;
   error?: string;
 }
 
@@ -93,6 +95,10 @@ export function withUserLookup<TBase extends AbstractConstructor<TwitterClientBa
                   legacy?: {
                     screen_name?: string;
                     name?: string;
+                    profile_image_url_https?: string;
+                  };
+                  avatar?: {
+                    image_url?: string;
                   };
                   core?: {
                     screen_name?: string;
@@ -120,6 +126,7 @@ export function withUserLookup<TBase extends AbstractConstructor<TwitterClientBa
               userId,
               username,
               name,
+              profileImageUrl: extractProfileImageUrl(userResult),
             };
           }
 
@@ -186,6 +193,7 @@ export function withUserLookup<TBase extends AbstractConstructor<TwitterClientBa
             id?: number;
             screen_name?: string;
             name?: string;
+            profile_image_url_https?: string;
           };
 
           const userId = data.id_str ?? (data.id ? String(data.id) : null);
@@ -199,6 +207,7 @@ export function withUserLookup<TBase extends AbstractConstructor<TwitterClientBa
             userId,
             username: data.screen_name ?? cleanUsername,
             name: data.name,
+            profileImageUrl: data.profile_image_url_https,
           };
         } catch (error) {
           lastError = error instanceof Error ? error.message : String(error);

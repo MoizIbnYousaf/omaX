@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+test_home=$(mktemp -d)
+cleanup() { rm -rf -- "$test_home"; }
+trap cleanup EXIT
+
+HOME="$test_home" "$root/scripts/install" >/dev/null
+[[ -L $test_home/.local/bin/omax ]]
+[[ $(readlink -- "$test_home/.local/bin/omax") == "$root/bin/omax" ]]
+[[ -L $test_home/.agents/skills/omax ]]
+[[ $(readlink -- "$test_home/.agents/skills/omax") == "$root/skills/omax" ]]
+
+HOME="$test_home" "$root/scripts/install" >/dev/null
+HOME="$test_home" "$root/scripts/uninstall" >/dev/null
+[[ ! -e $test_home/.local/bin/omax ]]
+[[ ! -e $test_home/.agents/skills/omax ]]
+
+ln -s -- /unmanaged/omax "$test_home/.local/bin/omax"
+if HOME="$test_home" "$root/scripts/install" >/dev/null 2>&1; then
+  echo "install layout: unmanaged link was replaced" >&2
+  exit 1
+fi
+[[ $(readlink -- "$test_home/.local/bin/omax") == /unmanaged/omax ]]
+
+echo "install layout: idempotent install and ownership-safe uninstall passed"

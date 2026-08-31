@@ -36,9 +36,9 @@ function firefoxProfile(root: string, dirName: string, profileName: string): str
 describe("parseChromiumLocalState", () => {
   test("maps profile directories to display names", () => {
     const names = parseChromiumLocalState(
-      JSON.stringify({ profile: { info_cache: { "Profile 6": { name: "Your Chromium" }, Default: { name: "Abdul Moiz" } } } }),
+      JSON.stringify({ profile: { info_cache: { "Profile 6": { name: "Research" }, Default: { name: "Personal" } } } }),
     );
-    expect(names).toEqual({ "Profile 6": "Your Chromium", Default: "Abdul Moiz" });
+    expect(names).toEqual({ "Profile 6": "Research", Default: "Personal" });
   });
 
   test("survives corrupt or unexpected JSON", () => {
@@ -104,10 +104,10 @@ describe("discoverProfiles on Linux", () => {
     // Native Chromium: two profiles, only one with a cookie store.
     const chromium = join(baseDir, "chromium");
     mkdirSync(join(chromium, "Profile 10"), { recursive: true });
-    const chromiumDb = chromiumProfile(chromium, "Profile 6", { "Profile 6": "Your Chromium", "Profile 10": "Moiz" });
+    const chromiumDb = chromiumProfile(chromium, "Profile 6", { "Profile 6": "Research", "Profile 10": "Personal" });
 
     // Chrome with the newer Network/Cookies layout.
-    const chromeDb = chromiumProfile(join(baseDir, "google-chrome"), "Default", { Default: "Abdul Moiz" }, true);
+    const chromeDb = chromiumProfile(join(baseDir, "google-chrome"), "Default", { Default: "Personal" }, true);
 
     // Flatpak Brave and Snap Chromium.
     const braveDb = chromiumProfile(join(home, ".var/app/com.brave.Browser/config/BraveSoftware/Brave-Browser"), "Default", { Default: "Flatpak Brave" });
@@ -147,9 +147,9 @@ describe("discoverProfiles on Linux", () => {
 
   test("carries real profile names and per-build keyring identity", () => {
     const chromium = discoverProfiles({ home, baseDir, platform: "linux" })
-      .find((p) => p.profileName === "Your Chromium");
+      .find((p) => p.profileName === "Research");
     expect(chromium?.keyringApp).toBe("chromium");
-    expect(describeProfile(chromium!)).toBe("Chromium — Your Chromium");
+    expect(describeProfile(chromium!)).toBe("Chromium — Research");
   });
 
   test("resolves Network/Cookies stores", () => {

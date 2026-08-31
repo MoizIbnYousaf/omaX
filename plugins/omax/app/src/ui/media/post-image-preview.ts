@@ -1,34 +1,29 @@
 import sharpModule from "sharp";
 import type { ExpandedTweet, TweetMedia } from "../../types.js";
 import type { ImagePreviewData } from "../components/image-preview.js";
-
-const ALLOWED_IMAGE_HOSTS = new Set([
-  "pbs.twimg.com",
-  "abs.twimg.com",
-  "video.twimg.com",
-  "ton.twimg.com",
-]);
-
-function isAllowedImageUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    // Demo mode renders bundled fixture avatars from disk; file: is never
-    // honored outside an explicit demo session.
-    if (parsed.protocol === "file:" && process.env.OMAX_DEMO === "1") {
-      return true;
-    }
-    return parsed.protocol === "https:" && ALLOWED_IMAGE_HOSTS.has(parsed.hostname);
-  } catch {
-    return false;
-  }
-}
+import { fetchImageBuffer, isAllowedImageUrl } from "./image-fetch.js";
 
 const DEFAULT_MAX_WIDTH = 40;
 const DEFAULT_MAX_HEIGHT = 12;
 const CELL_ASPECT_RATIO = 0.5;
+const MAX_INPUT_PIXELS = 40_000_000;
 
 const previewCache = new Map<string, Promise<ImagePreviewData | undefined>>();
 const inlineImageCache = new Map<string, Promise<InlineImageData | undefined>>();
+const PREVIEW_CACHE_LIMIT = 128;
+const INLINE_CACHE_LIMIT = 256;
+
+function setBounded<K, V>(cache: Map<K, V>, key: K, value: V, limit: number): void {
+  if (!cache.has(key) && cache.size >= limit) {
+    const oldest = cache.keys().next().value as K | undefined;
+    if (oldest !== undefined) cache.delete(oldest);
+  }
+  cache.set(key, value);
+}
+
+function decodeImage(input: Buffer) {
+  return sharpModule(input, { limitInputPixels: MAX_INPUT_PIXELS });
+}
 
 interface ImagePreviewOptions {
   maxWidth?: number;
@@ -125,17 +120,6 @@ export function getPostPrimaryImageDimensions(
   return { width: media.width, height: media.height };
 }
 
-async function fetchImage(imageUrl: string): Promise<Buffer> {
-  const parsed = new URL(imageUrl);
-  if (parsed.protocol === "file:") {
-    const { readFile } = await import("node:fs/promises");
-    const { fileURLToPath } = await import("node:url");
-    return readFile(fileURLToPath(parsed));
-  }
-  const resp = await fetch(imageUrl);
-  return Buffer.from(await resp.arrayBuffer());
-}
-
 export async function getImagePreview(
   imageUrl: string,
   options: ImagePreviewOptions = {},
@@ -153,11 +137,11 @@ export async function getImagePreview(
       if (!isAllowedImageUrl(imageUrl)) {
         return undefined;
       }
-      const buf = await fetchImage(imageUrl);
-      const meta = await sharpModule(buf).metadata();
+      const buf = await fetchImageBuffer(imageUrl);
+      const meta = await decodeImage(buf).metadata();
       const target = fitPreviewSize(meta.width ?? 48, meta.height ?? 48, normalized.maxWidth, normalized.maxHeight);
 
-      const { data, info } = await sharpModule(buf)
+      const { data, info } = await decodeImage(buf)
         .resize(target.width, target.height, { fit: "inside" })
         .ensureAlpha()
         .raw()
@@ -174,7 +158,7 @@ export async function getImagePreview(
     }
   })();
 
-  previewCache.set(cacheKey, pending);
+  setBounded(previewCache, cacheKey, pending, PREVIEW_CACHE_LIMIT);
   return pending;
 }
 
@@ -194,8 +178,8 @@ export async function getInlineImageData(
       if (!isAllowedImageUrl(imageUrl)) {
         return undefined;
       }
-      const buf = await fetchImage(imageUrl);
-      const meta = await sharpModule(buf).metadata();
+      const buf = await fetchImageBuffer(imageUrl);
+      const meta = await decodeImage(buf).metadata();
       const target = fitBoundingSize(
         meta.width ?? 48,
         meta.height ?? 48,
@@ -203,7 +187,7 @@ export async function getInlineImageData(
         normalized.maxHeightPx,
       );
 
-      const pngData = await sharpModule(buf)
+      const pngData = await decodeImage(buf)
         .resize(target.width, target.height, { fit: "inside" })
         .png()
         .toBuffer();
@@ -220,6 +204,6 @@ export async function getInlineImageData(
     }
   })();
 
-  inlineImageCache.set(cacheKey, pending);
+  setBounded(inlineImageCache, cacheKey, pending, INLINE_CACHE_LIMIT);
   return pending;
 }

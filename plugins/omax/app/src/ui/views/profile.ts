@@ -341,6 +341,7 @@ export class ProfileView implements OmaXView {
         id: lookup.userId,
         username: lookup.username,
         name: lookup.name ?? lookup.username,
+        profileImageUrl: lookup.profileImageUrl,
       };
       await this.loadMorePosts();
       this.ctx.setStatus(`Loaded profile @${this.username}.`);

@@ -48,7 +48,7 @@ docs/screenshots/           per-theme demo captures used by the README
 
 ```bash
 ./scripts/test          # fast gate: typecheck, unit tests, demo smoke
-./scripts/test --full   # adds the 49-assertion offline TUI suite
+./scripts/test --full   # adds the complete offline TUI suite
 ```
 
 The gate must pass offline and logged out. If a change cannot be verified

@@ -26,7 +26,12 @@ privately with the smallest synthetic reproduction possible.
 
 ## Scope notes
 
-omaX talks only to `x.com` / `twitter.com` and to the local browser cookie
-stores and keyring. It uses the web client's GraphQL surface rather than the
-official API, so query ids and feature flags drift over time; a breakage there
-is a bug, not a security boundary.
+omaX sends API requests only to `x.com` / `twitter.com`, and downloads display
+assets only from the explicit X media allowlist (`pbs.twimg.com`,
+`abs.twimg.com`, `video.twimg.com`, and `ton.twimg.com`). It also reads the
+local browser cookie stores and keyring. Image redirects are revalidated and
+downloads are bounded by time, type, and size.
+
+It uses the web client's GraphQL surface rather than the official API, so query
+ids and feature flags drift over time; a breakage there is a bug, not a
+security boundary.

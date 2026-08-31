@@ -228,6 +228,13 @@ export function withUsers<TBase extends AbstractConstructor<TwitterClientBase>>(
                     ? data.user.id
                     : null;
 
+          const profileImageUrl =
+            typeof data?.profile_image_url_https === 'string'
+              ? data.profile_image_url_https
+              : typeof data?.user?.profile_image_url_https === 'string'
+                ? data.user.profile_image_url_https
+                : undefined;
+
           if (username && userId) {
             this.clientUserId = userId;
             return {
@@ -236,6 +243,7 @@ export function withUsers<TBase extends AbstractConstructor<TwitterClientBase>>(
                 id: userId,
                 username,
                 name: name || username,
+                profileImageUrl,
               },
             };
           }

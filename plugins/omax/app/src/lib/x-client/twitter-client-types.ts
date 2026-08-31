@@ -56,6 +56,7 @@ export type GraphqlTweetResult = {
         legacy?: {
           screen_name?: string;
           name?: string;
+          profile_image_url_https?: string;
         };
         core?: {
           screen_name?: string;
@@ -328,11 +329,7 @@ export type SearchResult =
 
 export interface CurrentUserResult {
   success: boolean;
-  user?: {
-    id: string;
-    username: string;
-    name: string;
-  };
+  user?: TwitterUser;
   error?: string;
 }
 

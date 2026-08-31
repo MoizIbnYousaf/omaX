@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "greensnow.omax",
+  "name": "omaX",
+  "version": "0.1.0",
+  "author": "MoizIbnYousaf",
+  "license": "MIT",
+  "description": "X in the terminal — Omarchy-themed TUI client with timeline, explore, bookmarks, lists, compose, and a JSON CLI. Cookie auth, no API keys.",
+  "kinds": ["bar-widget"],
+  "activation": "on-demand",
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "omaX",
+    "description": "Launch omaX, the Omarchy-themed X/Twitter terminal client.",
+    "category": "Communication",
+    "aliases": ["x", "twitter", "omax", "tweet"],
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}

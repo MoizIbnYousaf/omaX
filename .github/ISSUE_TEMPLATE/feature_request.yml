@@ -1,0 +1,15 @@
+name: Feature request
+description: Suggest something for omaX
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do
+      description: The workflow you want, not the implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Keybindings, prior art, or how you would expect it to behave.

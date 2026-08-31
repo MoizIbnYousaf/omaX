@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# omaX release gate.
+#   scripts/test          fast gate (fits the manager's 60s check budget):
+#                         typecheck + theme-engine unit tests + demo-mode smoke
+#   scripts/test --full   fast gate plus the full 48-assertion TUI e2e suite
+#                         (offline demo mode — run before every release)
+
+FULL=0
+[ "${1:-}" = "--full" ] && FULL=1
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SRC_APP="$ROOT/plugins/omax/app"
+# Run from a synced copy in XDG state so the canonical plugin tree never grows
+# node_modules or other generated state.
+APP="${XDG_STATE_HOME:-$HOME/.local/state}/omax/gate"
+mkdir -p "$APP"
+# The canonical plugin tree must stay free of build state: a deployed plugin
+# tree may not contain symlinks, and node_modules is full of them.
+rm -rf "$SRC_APP/node_modules"
+rsync -a --delete --exclude node_modules "$SRC_APP/" "$APP/"
+
+if ! command -v bun >/dev/null; then
+  MISE_BUN="$HOME/.local/share/mise/installs/bun/latest/bin"
+  [ -x "$MISE_BUN/bun" ] && export PATH="$MISE_BUN:$PATH"
+fi
+command -v bun >/dev/null || { echo "test: bun is required" >&2; exit 1; }
+command -v tmux >/dev/null || { echo "test: tmux is required" >&2; exit 1; }
+
+cd "$APP"
+
+echo "--- bun install (frozen) ---"
+bun install --frozen-lockfile --silent
+
+echo "--- typecheck ---"
+bun run typecheck
+
+echo "--- unit tests ---"
+bun test test/*.test.ts
+
+echo "--- demo-mode smoke (offline, no login) ---"
+SESSION="omax-gate-$$"
+cleanup() { tmux kill-session -t "$SESSION" 2>/dev/null || true; }
+trap cleanup EXIT
+tmux new-session -d -s "$SESSION" -x 120 -y 30 "cd $APP && PATH=$PATH bun src/index.ts --demo"
+ok=0
+for _ in $(seq 1 15); do
+  if tmux capture-pane -t "$SESSION" -p 2>/dev/null | grep -q "Home Timeline"; then ok=1; break; fi
+  sleep 1
+done
+[ "$ok" = 1 ] || { echo "smoke: demo TUI did not reach Home Timeline" >&2; exit 1; }
+tmux capture-pane -t "$SESSION" -p | grep -q "omaX" || { echo "smoke: omaX branding missing" >&2; exit 1; }
+echo "smoke: demo TUI renders Home Timeline with omaX branding"
+
+if [ "$FULL" = 1 ]; then
+  echo "--- full offline TUI e2e ---"
+  bash test/e2e-tui.sh
+fi
+
+echo "release gate: all checks passed"

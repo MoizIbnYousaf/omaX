@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# omaX — X in the terminal, Omarchy-themed.
+#   omax                launch the TUI
+#   omax demo           launch the TUI offline with fixture data (no login)
+#   omax cli <cmd...>   JSON CLI (whoami, home, search, post, like, ...)
+#   omax doctor         check runtime prerequisites
+#
+# Runs from the deployed Omarchy plugin copy. Dependencies are installed into
+# XDG state (never into the deployed tree) so deploys stay drift-free.
+
+# Prefer an explicit override, then a standalone checkout next to this script,
+# then the deployed Omarchy plugin, then the monorepo working tree.
+SELF="${BASH_SOURCE[0]}"
+while [ -h "$SELF" ]; do
+  SELF_DIR="$(cd -P "$(dirname "$SELF")" && pwd)"
+  SELF="$(readlink "$SELF")"
+  [[ "$SELF" != /* ]] && SELF="$SELF_DIR/$SELF"
+done
+SELF_DIR="$(cd -P "$(dirname "$SELF")" && pwd)"
+
+APP_SRC="${OMAX_APP_DIR:-}"
+if [ -z "$APP_SRC" ] || [ ! -d "$APP_SRC" ]; then
+  for candidate in \
+    "$SELF_DIR/../plugins/omax/app" \
+    "$HOME/.config/omarchy/plugins/greensnow.omax/app" \
+    "$HOME/projects/my-omarchy-plugins/packages/omax/source/plugins/omax/app"
+  do
+    if [ -d "$candidate" ]; then APP_SRC="$(cd -P "$candidate" && pwd)"; break; fi
+  done
+fi
+if [ ! -d "$APP_SRC" ]; then
+  echo "omax: app source not found (deploy greensnow.omax or set OMAX_APP_DIR)" >&2
+  exit 1
+fi
+
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/omax"
+RUNTIME="$STATE_DIR/runtime"
+mkdir -p "$RUNTIME"
+
+sync_runtime() {
+  local stamp_file="$RUNTIME/.source-stamp" stamp
+  stamp=$(cd "$APP_SRC" && find src test package.json bun.lock tsconfig.json -type f -print0 2>/dev/null \
+    | sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1)
+  if [ ! -f "$stamp_file" ] || [ "$(cat "$stamp_file")" != "$stamp" ]; then
+    rsync -a --delete --exclude node_modules "$APP_SRC/" "$RUNTIME/app/"
+    (cd "$RUNTIME/app" && bun install --frozen-lockfile --silent)
+    printf '%s\n' "$stamp" > "$stamp_file"
+  fi
+}
+
+doctor() {
+  local ok=0
+  for cmd in bun rsync; do
+    if command -v "$cmd" >/dev/null; then echo "ok   $cmd"; else echo "MISS $cmd"; ok=1; fi
+  done
+  if command -v secret-tool >/dev/null; then
+    echo "ok   secret-tool (browser keyring readable)"
+  else
+    echo "note secret-tool missing — v11 browser cookies cannot be decrypted (install libsecret)"
+  fi
+  local colors="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/current/theme/colors.toml"
+  if [ -f "$colors" ]; then echo "ok   omarchy theme ($colors)"; else echo "note omarchy theme not found — using fallback palette"; fi
+  echo "app  $APP_SRC"
+
+  # Browser sessions omaX can read. Availability only — never cookie values.
+  sync_runtime
+  bun "$RUNTIME/app/src/cli.ts" browsers 2>/dev/null | jq -r '
+    if (.profiles | length) == 0 then
+      "note no browser profiles found — log into x.com in Chromium, Chrome, Brave, or Firefox"
+    else
+      .profiles[] | "ok   \(.label)  [\(.profileDir)]  keyring=\(
+        if .keyringPasswordAvailable == null then "n/a"
+        elif .keyringPasswordAvailable then "yes" else "NO" end)"
+    end' || echo "note browser discovery unavailable"
+  return $ok
+}
+
+command -v bun >/dev/null || { echo "omax: bun is required (https://bun.sh)" >&2; exit 1; }
+
+case "${1:-}" in
+  doctor) doctor; exit $? ;;
+  cli)    shift; sync_runtime; exec bun "$RUNTIME/app/src/cli.ts" "$@" ;;
+  demo)   shift || true; sync_runtime; exec bun "$RUNTIME/app/src/index.ts" --demo "$@" ;;
+  *)      sync_runtime; exec bun "$RUNTIME/app/src/index.ts" "$@" ;;
+esac

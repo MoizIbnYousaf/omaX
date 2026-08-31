@@ -1,0 +1,37 @@
+name: Bug report
+description: Something in omaX misbehaves
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Never paste cookies, `auth_token`/`ct0` values, keyring output, or a
+        screenshot of a real timeline. Reproduce with `omax demo`, which runs
+        on local fixtures.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. omax demo
+        2. press 2
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: omax doctor
+      description: Output of `omax doctor`. It reports availability only, never secrets.
+      render: text
+  - type: input
+    id: terminal
+    attributes:
+      label: Terminal and theme
+      placeholder: kitty 0.48, Omarchy Tokyo Night

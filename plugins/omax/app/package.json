@@ -1,0 +1,20 @@
+{
+  "name": "omax",
+  "version": "0.1.0",
+  "description": "OmaX \u2014 Omarchy-themed terminal UI client for X/Twitter",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "bun src/index.ts",
+    "start": "bun src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@opentui/core": "0.1.90",
+    "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "typescript": "^5.9.3"
+  }
+}

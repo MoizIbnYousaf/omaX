@@ -1,0 +1,25 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  release-gate:
+    runs-on: ubuntu-latest
+    container: archlinux:base
+    steps:
+      - name: Install test prerequisites
+        run: >-
+          pacman -Syu --noconfirm
+          bash bun coreutils findutils git jq rsync tmux
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      # The gate runs entirely offline and logged out: typecheck, unit tests,
+      # and the full TUI suite against the fixture client.
+      - name: Release gate
+        run: ./scripts/test --full

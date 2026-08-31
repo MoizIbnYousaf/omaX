@@ -9,7 +9,7 @@ and inline media without a browser window or official API key.
 
 It uses the X session already in your browser. Cookies and keyring secrets stay
 in memory, demo mode needs no account or network, and every public screenshot
-uses fictional local fixtures.
+uses local fixtures rather than an authenticated timeline.
 
 ![omaX in Tokyo Night](docs/screenshots/omax-tokyo-night.png)
 
@@ -68,7 +68,9 @@ Runtime dependencies live under `${XDG_STATE_HOME:-~/.local/state}/omax`.
 - **Agent JSON CLI** — read commands are scriptable; public write commands have
   an explicit authorization boundary in the bundled skill.
 - **Offline demo and release gate** — the complete interface is testable with
-  fictional people, posts, and artwork. No login and no network required.
+  local avatars and synthetic posts. No login and no network required. DHH and
+  Jason Fried appear as labelled references; their demo copy is not a post or
+  quote.
 
 ## It wears your theme
 
@@ -83,9 +85,10 @@ switches while it runs.
 |---|---|
 | ![Everforest](docs/screenshots/omax-everforest.png) | ![Tokyo Night](docs/screenshots/omax-tokyo-night.png) |
 
-These captures come from `omax demo`: synthetic local data and repo-owned
-fictional avatars, never a real timeline. To preview another palette without
-changing your desktop:
+These captures come from `omax demo`: synthetic local data and local avatar
+fixtures, never a real timeline. The DHH and Jason Fried likenesses are
+labelled references and do not imply real posts or endorsements. To preview
+another palette without changing your desktop:
 
 ```bash
 OMAX_THEME_FILE=/path/to/colors.toml omax demo
@@ -97,7 +100,7 @@ OMAX_THEME_FILE=/path/to/colors.toml omax demo
 omax                    # account picker, then the TUI
 omax --auto             # use the most recently active browser session
 omax --profile "Work"   # use a named browser profile
-omax demo               # offline fictional fixtures
+omax demo               # offline local fixtures
 omax doctor             # prerequisites and available browser profiles
 
 omax cli whoami
@@ -223,7 +226,7 @@ plugins/omax/app/src/index.ts  account selection and interactive TUI
 plugins/omax/app/src/cli.ts    JSON command boundary
 plugins/omax/app/src/auth.ts   shared browser-session authentication
 plugins/omax/app/src/ui/       views, components, themes, Kitty media
-plugins/omax/app/src/demo/     fictional offline fixtures and avatar artwork
+plugins/omax/app/src/demo/     offline fixtures and avatar artwork
 skills/omax/                   agent authorization contract
 scripts/test                   release gate
 ```

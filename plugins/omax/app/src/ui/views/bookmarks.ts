@@ -301,6 +301,9 @@ export class BookmarksView implements OmaXView {
         scrollBox.scrollChildIntoView(selectedCardId);
         const after = scrollBox.scrollTop;
 
+        if (before !== after) {
+          this.ctx.inlineImageManager.reconcileAfterScroll(() => this.onDidRender());
+        }
         if (before === after && attempt < 4) {
           this.scrollSelectedIntoViewWithRetry(selectedCardId, attempt + 1);
         }

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.1 — 2026-08-31
+
+- Added DHH and Jason Fried likenesses from maintainer-supplied avatar
+  references.
+- Their demo cards state that they are synthetic UI fixtures, not real posts
+  or quotes; the offline demo still contains no account session or timeline
+  data.
+- Refreshed the public previews and documented the likeness provenance and
+  non-endorsement boundary.
+- Reconciled Kitty avatar and media placements after ScrollBox layout settles,
+  preventing old images from remaining painted over later posts while
+  navigating long timelines.
+
 ## 0.1.0 — 2026-08-31
 
 First release of omaX, forked from `xterminal` and rebuilt as an Omarchy

@@ -74,4 +74,46 @@ describe("profile image mapping", () => {
       await rm(stateHome, { recursive: true, force: true });
     }
   });
+
+  test("demo labels the DHH likeness as a fixture rather than a real post", async () => {
+    const stateHome = await mkdtemp(join(tmpdir(), "omax-dhh-demo-state-"));
+    const previousStateHome = process.env.XDG_STATE_HOME;
+    process.env.XDG_STATE_HOME = stateHome;
+
+    try {
+      const { client } = await createDemoClient();
+      const timeline = await client.getHomeTimeline(1);
+      const dhh = timeline.tweets?.[0];
+
+      expect(dhh?.author.username).toBe("dhh");
+      expect(dhh?.author.name).toBe("DHH");
+      expect(dhh?.text).toContain("not a real post or quote");
+      expect(dhh?.author.profileImageUrl?.startsWith("file:")).toBe(true);
+    } finally {
+      if (previousStateHome === undefined) delete process.env.XDG_STATE_HOME;
+      else process.env.XDG_STATE_HOME = previousStateHome;
+      await rm(stateHome, { recursive: true, force: true });
+    }
+  });
+
+  test("demo labels the Jason Fried likeness as a fixture", async () => {
+    const stateHome = await mkdtemp(join(tmpdir(), "omax-jason-demo-state-"));
+    const previousStateHome = process.env.XDG_STATE_HOME;
+    process.env.XDG_STATE_HOME = stateHome;
+
+    try {
+      const { client } = await createDemoClient();
+      const timeline = await client.getHomeTimeline(3);
+      const jason = timeline.tweets?.[2];
+
+      expect(jason?.author.username).toBe("jasonfried");
+      expect(jason?.author.name).toBe("Jason Fried");
+      expect(jason?.text).toContain("not a real post or quote");
+      expect(jason?.author.profileImageUrl?.startsWith("file:")).toBe(true);
+    } finally {
+      if (previousStateHome === undefined) delete process.env.XDG_STATE_HOME;
+      else process.env.XDG_STATE_HOME = previousStateHome;
+      await rm(stateHome, { recursive: true, force: true });
+    }
+  });
 });

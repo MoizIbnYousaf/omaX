@@ -77,7 +77,7 @@ export class KittyInlineImageBackend implements InlineImageBackend {
       this.writeRaw(
         this.formatGraphicsCommand({
           a: "d",
-          d: "p",
+          d: "i",
           i: placement.kittyImageId,
           p: placement.placementId,
           q: 2,
@@ -123,16 +123,20 @@ export class KittyInlineImageBackend implements InlineImageBackend {
       needsTransmit = true;
     }
 
-    const newPlacementId = this.nextPlacementId++;
+    const reusesPlacement = oldPlacement?.kittyImageId === kittyImageId;
+    const newPlacementId = reusesPlacement
+      ? oldPlacement.placementId
+      : this.nextPlacementId++;
     const parts: string[] = [];
 
-    // 1. Atomically delete the previous placement (if any). Keep image data
-    //    so unrelated placements that share the same id stay valid.
-    if (oldPlacement) {
+    // Reusing an image/placement id pair makes Kitty move the existing
+    // placement instead of creating another one. If the content changed,
+    // remove the old pair while retaining its transmitted image data.
+    if (oldPlacement && !reusesPlacement) {
       parts.push(
         this.formatGraphicsCommand({
           a: "d",
-          d: "p",
+          d: "i",
           i: oldPlacement.kittyImageId,
           p: oldPlacement.placementId,
           q: 2,
@@ -140,13 +144,12 @@ export class KittyInlineImageBackend implements InlineImageBackend {
       );
     }
 
-    // 2. Transmit pixel data only the first time we see this content.
+    // Transmit pixel data only the first time we see this content.
     if (needsTransmit) {
       this.appendTransmitChunks(parts, request.asset.pngData, kittyImageId);
     }
 
-    // 3. Move cursor to the target cell and create a new placement that
-    //    references the (possibly long-lived) image id.
+    // Move the existing placement or create one for newly seen content.
     const row = request.placement.y + 1;
     const col = request.placement.x + 1;
     parts.push(`${ESC}7`);

@@ -54,4 +54,22 @@ describe("KittyInlineImageBackend", () => {
     }).activePlacements;
     expect(placements.has("timeline:avatar:post-1")).toBe(true);
   });
+
+  test("moves an unchanged image by reusing its placement id", async () => {
+    const { backend, output } = backendWithRenderer();
+    await backend.show(request("one", 1));
+    await backend.update(request("one", 9));
+
+    expect(output[1]).not.toContain("a=d");
+    expect(output[1]).toContain("a=p,i=1,p=1");
+  });
+
+  test("deletes the exact old placement when image content changes", async () => {
+    const { backend, output } = backendWithRenderer();
+    await backend.show(request("one", 1));
+    await backend.update(request("two", 9));
+
+    expect(output[1]).toContain("a=d,d=i,i=1,p=1");
+    expect(output[1]).toContain("a=p,i=2,p=2");
+  });
 });

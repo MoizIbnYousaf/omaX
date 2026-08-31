@@ -42,6 +42,7 @@ export class InlineImageManager {
   private warnedUnavailable = false;
   private warnedFailure = false;
   private reconcileSequence = 0;
+  private scrollRefreshSequence = 0;
 
   public constructor(
     private readonly renderer: CliRenderer,
@@ -190,6 +191,7 @@ export class InlineImageManager {
 
   public async clearView(viewId: string): Promise<void> {
     this.reconcileSequence += 1;
+    this.scrollRefreshSequence += 1;
     const idsToHide = [...this.activeKittyImages.values()]
       .filter((state) => state.viewId === viewId)
       .map((state) => state.imageId);
@@ -201,8 +203,30 @@ export class InlineImageManager {
 
   public async clearAll(): Promise<void> {
     this.reconcileSequence += 1;
+    this.scrollRefreshSequence += 1;
     await this.kittyBackend.clearAll();
     this.activeKittyImages.clear();
+  }
+
+  /** ScrollBox moves its children after the app's normal post-render pass.
+   *  Re-read anchor coordinates once that layout settles so Kitty placements
+   *  move with the text instead of remaining painted at their old cells. */
+  public reconcileAfterScroll(reconcile: () => Promise<void>): void {
+    const sequence = ++this.scrollRefreshSequence;
+    void this.renderer
+      .idle()
+      .then(async () => {
+        if (sequence !== this.scrollRefreshSequence) {
+          return;
+        }
+        await reconcile();
+      })
+      .catch((error) => {
+        if (!this.warnedFailure) {
+          this.warnedFailure = true;
+          this.setStatus(`Kitty image refresh failed: ${(error as Error).message}`);
+        }
+      });
   }
 
   private resolveMode(): ResolvedImageMode {

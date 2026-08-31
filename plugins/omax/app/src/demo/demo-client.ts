@@ -19,12 +19,12 @@ import type {
   TwitterUser,
 } from "../lib/x-client/index.js";
 
-const DEMO_ME: TwitterUser = { id: "1", username: "mirachen", name: "Mira Chen" };
+const DEMO_ME: TwitterUser = { id: "1", username: "julescarter", name: "Jules Carter" };
 
 const AUTHORS = [
-  { username: "mirachen", name: "Mira Chen", column: 0, row: 0 },
+  { username: "dhh", name: "DHH", column: 0, row: 0 },
   { username: "julescarter", name: "Jules Carter", column: 1, row: 0 },
-  { username: "raesol", name: "Rae Sol", column: 2, row: 0 },
+  { username: "jasonfried", name: "Jason Fried", column: 2, row: 0 },
   { username: "theoraman", name: "Theo Raman", column: 0, row: 1 },
   { username: "northstarlab", name: "Northstar Lab", column: 1, row: 1 },
   { username: "formhouse", name: "Form House", column: 2, row: 1 },
@@ -33,9 +33,9 @@ const AUTHORS = [
 const avatarUrls = new Map<string, string>();
 const AVATAR_CELL_SIZE = 256;
 
-/** Crop the repository-owned fictional avatar atlas into private runtime files.
- *  Demo mode exercises the same Kitty image pipeline as live accounts while
- *  remaining completely offline and free of real identities. */
+/** Crop the local demo avatar atlas into private runtime files. Demo mode
+ *  exercises the same Kitty image pipeline as live accounts while remaining
+ *  completely offline. The DHH reference is explicitly labelled in its card. */
 async function prepareDemoAvatars(): Promise<void> {
   const dir = join(
     process.env.XDG_STATE_HOME?.trim() || join(homedir(), ".local", "state"),
@@ -77,11 +77,21 @@ const TEXTS = [
   "Demo post with a longer body to exercise wrapping: terminals render text at a fixed grid, so layout code has to measure in cells, not pixels — which is exactly why TUI layout engines feel so predictable once you internalize the model.",
 ];
 
+const REFERENCE_FIXTURE_TEXT = new Map([
+  ["dhh", "Demo fixture only — DHH avatar reference, not a real post or quote."],
+  [
+    "jasonfried",
+    "Demo fixture only — Jason Fried avatar reference, not a real post or quote.",
+  ],
+]);
+
 function makeTweet(i: number, prefix = ""): TweetData {
   const author = AUTHORS[i % AUTHORS.length]!;
+  const text =
+    REFERENCE_FIXTURE_TEXT.get(author.username) ?? TEXTS[i % TEXTS.length]!;
   return {
     id: String(100000 + i),
-    text: `${prefix}${TEXTS[i % TEXTS.length]!}`,
+    text: `${prefix}${text}`,
     author: { username: author.username, name: author.name, profileImageUrl: avatarUrls.get(author.username) },
     authorId: String(10 + (i % AUTHORS.length)),
     createdAt: new Date(Date.now() - i * 47 * 60_000).toISOString(),
@@ -152,7 +162,7 @@ class DemoClient {
   async getListMemberships() {
     return {
       success: true,
-      lists: [{ id: "9003", name: "linux desktop", memberCount: 512, owner: { id: "2", username: "raesol", name: "Rae Sol" } }],
+      lists: [{ id: "9003", name: "linux desktop", memberCount: 512, owner: { id: "2", username: "jasonfried", name: "Jason Fried" } }],
     };
   }
 

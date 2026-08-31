@@ -46,6 +46,10 @@ than installed as packages.
 omaX uses no official X/Twitter API and ships no API keys, OAuth application,
 tokens, cookies, or account data.
 
-The fictional people and organizations shown in demo mode and project
-screenshots are repository-owned synthetic fixtures. They do not represent X
-accounts or endorsements.
+The DHH likeness in demo mode is a generated avatar transformation based on a
+portrait reference supplied by the maintainer. The Jason Fried avatar is also
+based on a maintainer-supplied reference. Both appear only beside copy that
+explicitly says it is a synthetic fixture, not a real post or quote. Their
+names and likenesses remain theirs; inclusion does not imply affiliation or
+endorsement. The remaining demo people, organizations, and artwork are
+repository-owned synthetic fixtures.

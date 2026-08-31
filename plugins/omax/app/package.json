@@ -1,6 +1,6 @@
 {
   "name": "omax",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "OmaX \u2014 Omarchy-themed terminal UI client for X/Twitter",
   "main": "src/index.ts",
   "type": "module",

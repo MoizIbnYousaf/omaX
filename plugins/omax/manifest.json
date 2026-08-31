@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "greensnow.omax",
   "name": "omaX",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "MoizIbnYousaf",
   "license": "MIT",
   "description": "X in the terminal — Omarchy-themed TUI client with timeline, explore, bookmarks, lists, compose, and a JSON CLI. Cookie auth, no API keys.",

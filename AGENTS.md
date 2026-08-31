@@ -2,8 +2,9 @@
 
 ## Scope
 
-This repository is the omaX client. It contains no personal data: no cookies,
-no tokens, no timeline content, and no screenshots of a real account.
+This repository is the omaX client. It contains no private personal data: no
+cookies, tokens, timeline content, or screenshots of an authenticated account.
+The public demo includes clearly labelled DHH and Jason Fried references.
 
 ## Source of truth
 
